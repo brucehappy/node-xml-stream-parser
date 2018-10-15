@@ -20,7 +20,11 @@
 		"nodeJS"
 	],
 	"author": "Tommy Dronkers",
-	"contributors": [{"name":"Mario Fahlandt"}],
+	"contributors": [
+		{
+			"name": "Mario Fahlandt"
+		}
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

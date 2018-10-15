@@ -8,143 +8,144 @@ import fs from 'fs';
 describe('node-xml-stream', function () {
 
 
-    describe('Emit instruction', function () {
+	describe('Emit instruction', function () {
 
-        it('#on(instruction)', function (done) {
-            let p = new Parser();
+		it('#on(instruction)', function (done) {
+			let p = new Parser();
 
-            p.on('instruction', function (name, attrs) {
-                expect(name).to.eql('xml');
-                expect(attrs).to.be.a('object').with.property('version', '2.0');
-                expect(attrs).to.have.property('encoding', 'utf-8');
-                done();
-            });
+			p.on('instruction', function (name, attrs) {
+				expect(name).to.eql('xml');
+				expect(attrs).to.be.a('object').with.property('version', '2.0');
+				expect(attrs).to.have.property('encoding', 'utf-8');
+				done();
+			});
 
-            p.write('<root><?xml version="2.0" encoding="utf-8"?></root>');
-        });
+			p.write('<root><?xml version="2.0" encoding="utf-8"?></root>');
+		});
 
-    });
-    describe('Emit Tag after that have namespace ', function () {
+	});
+	describe('Emit Tag after that have namespace ', function () {
 
-        it('#on(instruction)', function (done) {
-            let p = new Parser();
+		it('#on(instruction)', function (done) {
+			let p = new Parser();
 
-            p.on('opentag', function (name, attrs) {
-                expect(name).to.eql('imo:openimmo');
-                expect(attrs).to.be.a('object').with.property('xmlns:imo', 'http://www.openimmo.de');
-                done();
-            });
+			p.on('opentag', function (name, attrs) {
+				expect(name).to.eql('imo:openimmo');
+				expect(attrs).to.be.a('object').with.property('xmlns:imo', 'http://www.openimmo.de');
+				expect(attrs).to.be.a('object').with.property('alter', 'with=init');
+				done();
+			});
 
-            p.write('<?xml version="1.0" encoding="UTF-8"?><imo:openimmo xmlns:imo="http://www.openimmo.de" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://www.openimmo.de openimmo.xsd"></imo:openimmo>');
-        });
+			p.write('<?xml version="1.0" encoding="UTF-8"?><imo:openimmo xmlns:imo="http://www.openimmo.de" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  alter="with=init" xsi:schemaLocation="http://www.openimmo.de openimmo.xsd"></imo:openimmo>');
+		});
 
-    });
+	});
 
 
-    describe('Emit opentag', function () {
-        it('#on(opentag)', function (done) {
-            let p = new Parser();
+	describe('Emit opentag', function () {
+		it('#on(opentag)', function (done) {
+			let p = new Parser();
 
-            p.on('opentag', function (name, attrs) {
-                expect(name).to.eql('root');
-                expect(attrs).to.be.a('object').with.property('name', 'steeljuice');
-                done();
-            });
+			p.on('opentag', function (name, attrs) {
+				expect(name).to.eql('root');
+				expect(attrs).to.be.a('object').with.property('name', 'steeljuice');
+				done();
+			});
 
-            p.write('<root name="steeljuice"><sub>TEXT</sub></root>');
-        });
+			p.write('<root name="steeljuice"><sub>TEXT</sub></root>');
+		});
 
-    });
+	});
 
-    describe('Emit closetag', function () {
-        it('#on(closetag)', function (done) {
-            let p = new Parser();
+	describe('Emit closetag', function () {
+		it('#on(closetag)', function (done) {
+			let p = new Parser();
 
-            p.on('closetag', function (name) {
-                expect(name).to.eql('root');
-                done();
-            });
+			p.on('closetag', function (name) {
+				expect(name).to.eql('root');
+				done();
+			});
 
-            p.write('<root name="steeljuice">TEXT</root>');
+			p.write('<root name="steeljuice">TEXT</root>');
 
-        });
+		});
 
-        it('#on(closetag) self closing.', function (done) {
-            let p = new Parser();
-            p.on('closetag', function (name, attrs) {
-                expect(name).to.eql('self');
-                expect(attrs).to.be.a('object').with.property('name', 'steeljuice');
-            });
+		it('#on(closetag) self closing.', function (done) {
+			let p = new Parser();
+			p.on('closetag', function (name, attrs) {
+				expect(name).to.eql('self');
+				expect(attrs).to.be.a('object').with.property('name', 'steeljuice');
+			});
 
-            p.write('<self name="steeljuice"/>');
-            p.write('<self name="steeljuice" />');
-            done();
-        });
-    });
+			p.write('<self name="steeljuice"/>');
+			p.write('<self name="steeljuice" />');
+			done();
+		});
+	});
 
-    describe('Emit text', function () {
+	describe('Emit text', function () {
 
-        it('#on(text)', function (done) {
-            let p = new Parser();
-            p.on('text', function (text) {
-                expect(text).to.eql('SteelJuice');
-                done();
-            });
-            p.write('<self name="steeljuice"/><root>SteelJuice</root>');
-        });
-    });
+		it('#on(text)', function (done) {
+			let p = new Parser();
+			p.on('text', function (text) {
+				expect(text).to.eql(' SteelJuice ');
+				done();
+			});
+			p.write('<self name="steeljuice"/><root> SteelJuice </root>');
+		});
+	});
 
-    describe('Emit CDATA', function () {
+	describe('Emit CDATA', function () {
 
-        it('#on(cdata)', function (done) {
-            let p = new Parser();
+		it('#on(cdata)', function (done) {
+			let p = new Parser();
 
-            p.on('cdata', function (cdata) {
-                expect(cdata).to.eql('<p>cdata-text</br></p>');
-                done();
-            });
+			p.on('cdata', function (cdata) {
+				expect(cdata).to.eql('<p>cdata-text</br></p>');
+				done();
+			});
 
-            p.write('<root><![CDATA[<p>cdata-text</br></p>]]</root>');
-        });
+			p.write('<root><![CDATA[<p>cdata-text</br></p>]]</root>');
+		});
 
-    });
+	});
 
-    describe('Ignore comments', function () {
+	describe('Ignore comments', function () {
 
-        it('#on(text) with comments', function (done) {
-            let p = new Parser();
-            p.on('text', function (text) {
-                expect(text).to.eql('TEXT');
-                done();
-            });
+		it('#on(text) with comments', function (done) {
+			let p = new Parser();
+			p.on('text', function (text) {
+				expect(text).to.eql('TEXT');
+				done();
+			});
 
-            p.write('<root><!--Comment is written here! -->TEXT<!-- another comment! --></root>');
-        });
+			p.write('<root><!--Comment is written here! -->TEXT<!-- another comment! --></root>');
+		});
 
-    });
+	});
 
-    describe('Stream', function () {
-        it('#pipe() a stream.', function (done) {
-            let p = new Parser();
-            let stream = fs.createReadStream('./test/intertwingly.atom');
-            stream.pipe(p);
+	describe('Stream', function () {
+		it('#pipe() a stream.', function (done) {
+			let p = new Parser();
+			let stream = fs.createReadStream('./test/intertwingly.atom');
+			stream.pipe(p);
 
-            // Count the number of entry tags found (start/closing) and compare them (they should be the same) when the stream is completed.
-            let entryclose = 0;
-            let entrystart = 0;
-            p.on('closetag', name => {
-                if (name === 'entry')
-                    entryclose++;
-            });
-            p.on('opentag', name => {
-                if (name === 'entry')
-                    entrystart++;
-            });
-            p.on('finish', () => {
-                expect(entryclose).to.eql(entrystart);
-                done();
-            });
-        });
-    });
+			// Count the number of entry tags found (start/closing) and compare them (they should be the same) when the stream is completed.
+			let entryclose = 0;
+			let entrystart = 0;
+			p.on('closetag', name => {
+				if (name === 'entry')
+					entryclose++;
+			});
+			p.on('opentag', name => {
+				if (name === 'entry')
+					entrystart++;
+			});
+			p.on('finish', () => {
+				expect(entryclose).to.eql(entrystart);
+				done();
+			});
+		});
+	});
 
 });

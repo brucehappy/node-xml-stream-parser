@@ -58,7 +58,7 @@ const Parser = function (_Writable) {
 		_this.buffer = '';
 		_this.pos = 0;
 		_this.tagType = TAG_TYPE.NONE;
-		_this.nameRegexp = new RegExp('^('+nameStartChar+nameChar+'*)\\s*');
+		_this.nameRegexp = new RegExp('^<?('+nameStartChar+nameChar+'*)\\s*');
 		_this.attributeRegexp = new RegExp('('+nameStartChar+nameChar+'*)="([^"]+?)"\\s*', 'g');
 		return _this;
 	}
@@ -138,20 +138,24 @@ const Parser = function (_Writable) {
 		value: function _onTagCompleted() {
 			let tag = this._endRecording();
 
-			let _parseTagString2 = this._parseTagString(tag),
-				name = _parseTagString2.name,
-				attributes = _parseTagString2.attributes;
+			let _parseTagString2 = this._parseTagString(tag);
+			if (!_parseTagString2) {
+				this.emit('error', new Error('Cannot parse tag string \''+tag+'\'.'));
+			} else {
+				let name = _parseTagString2.name,
+					attributes = _parseTagString2.attributes;
 
-			if (this.tagType && this.tagType == TAG_TYPE.OPENING) {
-				this.emit(EVENTS.OPEN_TAG, name, attributes);
-			}
+				if (this.tagType && this.tagType == TAG_TYPE.OPENING) {
+					this.emit(EVENTS.OPEN_TAG, name, attributes);
+				}
 
-			if (this.tagType && this.tagType === TAG_TYPE.CLOSING) {
-				this.emit(EVENTS.CLOSE_TAG, name, attributes);
-			}
-			if (this.tagType && this.tagType === TAG_TYPE.SELF_CLOSING) {
-				this.emit(EVENTS.OPEN_TAG, name, attributes);
-				this.emit(EVENTS.CLOSE_TAG, name, attributes);
+				if (this.tagType && this.tagType === TAG_TYPE.CLOSING) {
+					this.emit(EVENTS.CLOSE_TAG, name, attributes);
+				}
+				if (this.tagType && this.tagType === TAG_TYPE.SELF_CLOSING) {
+					this.emit(EVENTS.OPEN_TAG, name, attributes);
+					this.emit(EVENTS.CLOSE_TAG, name, attributes);
+				}
 			}
 
 			this.state = STATE.TEXT;
@@ -175,11 +179,15 @@ const Parser = function (_Writable) {
 			this.pos -= 1; // Move position back 1 step since instruction ends with '?>'
 			let inst = this._endRecording();
 
-			let _parseTagString3 = this._parseTagString(inst),
-				name = _parseTagString3.name,
-				attributes = _parseTagString3.attributes;
+			let _parseTagString3 = this._parseTagString(inst);
+			if (!_parseTagString3) {
+				this.emit('error', new Error('Cannot parse instruction string \''+inst+'\'.'));
+			} else {
+				let name = _parseTagString3.name,
+					attributes = _parseTagString3.attributes;
 
-			this.emit(EVENTS.INSTRUCTION, name, attributes);
+				this.emit(EVENTS.INSTRUCTION, name, attributes);
+			}
 			this.state = STATE.TEXT;
 		}
 	}, {
@@ -230,6 +238,8 @@ const Parser = function (_Writable) {
 					attributes[match[1]] = match[2];
 				}
 				return { name: name, attributes: attributes };
+			} else {
+				return null;
 			}
 		}
 	}]);

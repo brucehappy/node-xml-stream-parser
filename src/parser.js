@@ -73,44 +73,48 @@ const Parser = function (_Writable) {
 				this.buffer += c;
 				this.pos++;
 
-				switch (this.state) {
+				try {
+					switch (this.state) {
 
-				case STATE.TEXT:
-					if (c === '<') this._onStartNewTag();
-					break;
+					case STATE.TEXT:
+						if (c === '<') this._onStartNewTag();
+						break;
 
-				case STATE.TAG_NAME:
-					if (prev === '<' && c === '?') {
-						this._onStartInstruction();
-					}
-					if (prev === '<' && c === '/') {
-						this._onCloseTagStart();
-					}
-					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') {
-						this._onCDATAStart();
-					}
-					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') {
-						this._onCommentStart();
-					}
-					if (c === '>') {
-						if (prev === '/') {
-							this.tagType = TAG_TYPE.SELF_CLOSING;
+					case STATE.TAG_NAME:
+						if (prev === '<' && c === '?') {
+							this._onStartInstruction();
 						}
-						this._onTagCompleted();
+						if (prev === '<' && c === '/') {
+							this._onCloseTagStart();
+						}
+						if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') {
+							this._onCDATAStart();
+						}
+						if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') {
+							this._onCommentStart();
+						}
+						if (c === '>') {
+							if (prev === '/') {
+								this.tagType = TAG_TYPE.SELF_CLOSING;
+							}
+							this._onTagCompleted();
+						}
+						break;
+
+					case STATE.INSTRUCTION:
+						if (prev === '?' && c === '>') this._onEndInstruction();
+						break;
+
+					case STATE.CDATA:
+						if (prev === ']' && c === ']') this._onCDATAEnd();
+						break;
+
+					case STATE.IGNORE_COMMENT:
+						if (this.buffer[this.pos - 3] === '-' && prev === '-' && c === '>') this._onCommentEnd();
+						break;
 					}
-					break;
-
-				case STATE.INSTRUCTION:
-					if (prev === '?' && c === '>') this._onEndInstruction();
-					break;
-
-				case STATE.CDATA:
-					if (prev === ']' && c === ']') this._onCDATAEnd();
-					break;
-
-				case STATE.IGNORE_COMMENT:
-					if (this.buffer[this.pos - 3] === '-' && prev === '-' && c === '>') this._onCommentEnd();
-					break;
+				} catch (e) {
+					return done(e);
 				}
 			}
 			done();
@@ -140,7 +144,7 @@ const Parser = function (_Writable) {
 
 			let _parseTagString2 = this._parseTagString(tag);
 			if (!_parseTagString2) {
-				this.emit('error', new Error('Cannot parse tag string \''+tag+'\'.'));
+				throw new Error('Cannot parse tag string \''+tag+'\'.');
 			} else {
 				let name = _parseTagString2.name,
 					attributes = _parseTagString2.attributes;
@@ -181,7 +185,7 @@ const Parser = function (_Writable) {
 
 			let _parseTagString3 = this._parseTagString(inst);
 			if (!_parseTagString3) {
-				this.emit('error', new Error('Cannot parse instruction string \''+inst+'\'.'));
+				throw new Error('Cannot parse instruction string \''+inst+'\'.');
 			} else {
 				let name = _parseTagString3.name,
 					attributes = _parseTagString3.attributes;
